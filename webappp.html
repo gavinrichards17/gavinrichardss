@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Snake Game</title>
+  <style>
+    body {
+      background-color: #e0f7fa;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #00796b;
+    }
+
+    canvas {
+      background-color: #fff;
+      border: 2px solid #00796b;
+    }
+
+    #score {
+      margin: 10px;
+      font-size: 20px;
+      color: #004d40;
+    }
+
+    button {
+      background-color: #00796b;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #004d40;
+    }
+
+    #startTip {
+      font-size: 16px;
+      color: #00796b;
+    }
+  </style>
+</head>
+<body>
+  <h1>🐍 Classic Snake Game</h1>
+  <div id="startTip">Press any arrow key to start!</div>
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+  <div id="score">Score: 0</div>
+  <button onclick="restartGame()">Restart Game</button>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const box = 20;
+    const canvasSize = 400;
+
+    let snake, food, direction, score, game, isGameStarted = false;
+
+    document.addEventListener("keydown", handleKeyPress);
+
+    function handleKeyPress(event) {
+      const key = event.key;
+      if (!isGameStarted && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(key)) {
+        isGameStarted = true;
+        document.getElementById("startTip").style.display = "none";
+        direction = key.replace("Arrow", "").toUpperCase();
+        game = setInterval(draw, 100);
+      } else {
+        changeDirection(event);
+      }
+    }
+
+    function startGame() {
+      snake = [{ x: 200, y: 200 }];
+      direction = null;
+      score = 0;
+      food = spawnFood();
+      document.getElementById("score").textContent = "Score: 0";
+      document.getElementById("startTip").style.display = "block";
+      isGameStarted = false;
+      if (game) clearInterval(game);
+      drawInitial();
+    }
+
+    function restartGame() {
+      startGame();
+    }
+
+    function changeDirection(event) {
+      const key = event.key;
+      if (key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+      else if (key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+      else if (key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+      else if (key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+    }
+
+    function spawnFood() {
+      return {
+        x: Math.floor(Math.random() * (canvasSize / box)) * box,
+        y: Math.floor(Math.random() * (canvasSize / box)) * box
+      };
+    }
+
+    function drawInitial() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#00796b";
+      ctx.fillRect(snake[0].x, snake[0].y, box, box);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < snake.length; i++) {
+        ctx.fillStyle = i === 0 ? "#00796b" : "#4db6ac";
+        ctx.fillRect(snake[i].x, snake[i].y, box, box);
+      }
+
+      ctx.fillStyle = "#ff6f00";
+      ctx.fillRect(food.x, food.y, box, box);
+
+      let headX = snake[0].x;
+      let headY = snake[0].y;
+
+      if (direction === "UP") headY -= box;
+      if (direction === "DOWN") headY += box;
+      if (direction === "LEFT") headX -= box;
+      if (direction === "RIGHT") headX += box;
+
+      const newHead = { x: headX, y: headY };
+
+      snake.unshift(newHead);
+
+      // Check wall collision
+      if (
+        headX < 0 || headY < 0 ||
+        headX >= canvasSize || headY >= canvasSize
+      ) {
+        clearInterval(game);
+        alert("Game Over! Final Score: " + score);
+        return;
+      }
+
+      // Check self-collision (skip checking head against itself)
+      for (let i = 1; i < snake.length; i++) {
+        if (snake[i].x === headX && snake[i].y === headY) {
+          clearInterval(game);
+          alert("Game Over! Final Score: " + score);
+          return;
+        }
+      }
+
+      // Eat food
+      if (headX === food.x && headY === food.y) {
+        score++;
+        document.getElementById("score").textContent = "Score: " + score;
+        food = spawnFood();
+      } else {
+        snake.pop(); // Remove tail unless eating
+      }
+    }
+
+    // Start game when page loads
+    startGame();
+  </script>
+</body>
+</html>
